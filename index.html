@@ -52,13 +52,13 @@
         #video-player-container {
             width: 100%;
             height: 100%;
-            position: absolute; /* Stellt sicher, dass es unter den Overlays liegt, falls nötig */
+            position: absolute;
             top: 0;
             left: 0;
-            z-index: 1; /* Niedriger z-index für den Player-Container */
+            z-index: 1;
         }
 
-        .static-overlay { /* Für den Flimmer-Effekt beim Umschalten */
+        .static-overlay {
             position: absolute;
             top: 0;
             left: 0;
@@ -69,20 +69,35 @@
                 repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(200,200,200,0.05) 1px, rgba(200,200,200,0.05) 2px);
             opacity: 0;
             transition: opacity 0.05s linear;
-            pointer-events: none; /* Lässt Klicks durch, da es nur kurz erscheint */
-            z-index: 10; /* Hoch, damit es kurzzeitig alles überdeckt */
+            pointer-events: none;
+            z-index: 10;
         }
 
-        #click-blocker-overlay { /* Die "unsichtbare Wand" */
+        #click-blocker-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            /* background-color: rgba(255,0,0,0.1); /* Testweise einfärben zum Debuggen */
-            z-index: 5; /* Liegt über dem Video-Player (z-index: 1), aber unter dem Static-Effekt (z-index: 10) */
+            z-index: 5;
         }
 
+        #custom-logo-overlay {
+            position: absolute;
+            bottom: 8px;   /* ANPASSEN nach Bedarf */
+            right: 10px;  /* ANPASSEN nach Bedarf */
+            width: auto;  /* Oder feste Breite, z.B. 60px - ANPASSEN */
+            height: 20px; /* ANPASSEN an die Größe des YouTube-Logos/deines Logos */
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        #custom-logo-overlay img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Skaliert das Bild passend, ohne es zu verzerren */
+        }
 
         #channel-display {
             font-family: 'Press Start 2P', cursive;
@@ -157,8 +172,13 @@
             Kanal: <span id="current-channel-name">Wähle einen Sender</span>
         </div>
         <div id="tv-screen-container">
-            <div id="video-player-container"></div> <div class="static-overlay" id="static-effect"></div>
-            <div id="click-blocker-overlay"></div> </div>
+            <div id="video-player-container"></div>
+            <div class="static-overlay" id="static-effect"></div>
+            <div id="click-blocker-overlay"></div>
+            <div id="custom-logo-overlay">
+                <img src="logo_IDtv_large.jpg" alt="IDtv Logo">
+            </div>
+        </div>
         <div class="controls">
             <button id="prev-channel" title="Vorheriger Sender"> << </button>
             <button id="random-channel" title="Zufälliger Sender"> Zufall </button>

@@ -44,7 +44,7 @@
             border: 3px solid #222;
             border-radius: 10px;
             margin-bottom: 20px;
-            position: relative; /* Wichtig für die Positionierung der Overlays */
+            position: relative;
             overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
@@ -84,19 +84,21 @@
 
         #custom-logo-overlay {
             position: absolute;
-            bottom: 10px;   /* ANPASSEN nach Bedarf */
-            right: 15px;  /* ANPASSEN nach Bedarf */
-            width: auto;  /* Oder feste Breite, z.B. 60px - ANPASSEN */
-            height: 50px; /* ANPASSEN an die Größe des YouTube-Logos/deines Logos */
+            bottom: 8px;
+            right: 10px;
+            width: auto;
+            height: 20px; /* ANPASSEN an die Größe des YouTube-Logos/deines Logos */
             z-index: 6;
             pointer-events: none;
+            opacity: 0; /* NEU: Standardmäßig unsichtbar */
+            transition: opacity 0.5s ease-in-out; /* NEU: Für sanftes Ein-/Ausblenden */
         }
 
         #custom-logo-overlay img {
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Skaliert das Bild passend, ohne es zu verzerren */
+            object-fit: contain;
         }
 
         #channel-display {
@@ -206,6 +208,7 @@
         let ytPlayer;
         let playerReady = false;
         let userWantsSound = false;
+        let logoFadeTimeoutId = null; // NEU: Timer-ID für das Logo-Ausblenden
 
         const prevButton = document.getElementById('prev-channel');
         const nextButton = document.getElementById('next-channel');
@@ -213,6 +216,7 @@
         const toggleMuteButton = document.getElementById('toggle-mute-button');
         const channelNameDisplay = document.getElementById('current-channel-name');
         const staticOverlay = document.getElementById('static-effect');
+        const customLogoOverlay = document.getElementById('custom-logo-overlay'); // NEU: Logo-Element holen
 
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -226,6 +230,7 @@
             } else {
                 channelNameDisplay.textContent = "Keine Sender konfiguriert!";
                 toggleMuteButton.disabled = true;
+                if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Sicherstellen, dass Logo aus ist
             }
         }
 
@@ -263,6 +268,7 @@
         function onPlayerError(event) {
             console.error("YouTube Player Fehler:", event.data);
             channelNameDisplay.textContent = "Fehler beim Laden des Senders.";
+             if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Logo bei Fehler ausblenden
         }
 
         function playStaticEffect(duration = 150) {
@@ -286,6 +292,7 @@
                 }
                 playerReady = false;
                 toggleMuteButton.disabled = true;
+                if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Logo ausblenden
                 return;
             }
 
@@ -296,6 +303,19 @@
             const channel = channels[currentChannelIndex];
             channelNameDisplay.textContent = `Kanal ${currentChannelIndex + 1}: ${channel.name}`;
             playStaticEffect();
+
+            // NEU: Logo-Handling
+            if (customLogoOverlay) {
+                customLogoOverlay.style.opacity = '1'; // Logo einblenden
+                if (logoFadeTimeoutId) {
+                    clearTimeout(logoFadeTimeoutId); // Alten Timer löschen
+                }
+                logoFadeTimeoutId = setTimeout(() => {
+                    if (customLogoOverlay) {
+                        customLogoOverlay.style.opacity = '0'; // Logo nach 4 Sek. ausblenden
+                    }
+                }, 4000);
+            }
 
             setTimeout(() => {
                 if (ytPlayer && playerReady) {
@@ -330,9 +350,10 @@
                 } else {
                     console.log("API oder Player noch nicht bereit, Video wird später geladen.");
                 }
-            }, 50);
+            }, 50); // Kurze Verzögerung für den Playerstart, damit Effekte vorher sichtbar sind
         }
 
+        // Event Listener für die Knöpfe
         nextButton.addEventListener('click', () => {
             if (channels.length > 0) loadChannel(currentChannelIndex + 1);
         });

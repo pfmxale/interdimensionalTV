@@ -85,22 +85,30 @@
         /* Standard-Stile für das Logo (Desktop und größere Bildschirme) */
         #custom-logo-overlay {
             position: absolute;
-            /* ANPASSEN: Diese Werte sind für Desktop. Teste und justiere sie. */
-            bottom: 10px;
-            right: 12px;
-            height: 40px; /* Beispielhöhe für Desktop - ANPASSEN */
-            width: auto;  /* Breite passt sich proportional zur Höhe an, wenn img object-fit: contain hat */
+            bottom: 10px; /* ANPASSEN nach Bedarf */
+            right: 12px;  /* ANPASSEN nach Bedarf */
+            height: 40px; /* GEÄNDERT: Höhe für Desktop */
+            width: auto;
             z-index: 6;
             pointer-events: none;
-            opacity: 0; /* Standardmäßig unsichtbar, wird per JS gesteuert */
-            transition: opacity 0.5s ease-in-out; /* Für sanftes Ein-/Ausblenden */
+            opacity: 0;
+            visibility: hidden;
+            /* GEÄNDERT: Übergang für Ausblenden definieren, Einblenden wird über .logo-visible gesteuert */
+            transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+        }
+
+        /* NEU: Klasse für sichtbares Logo mit schnellem Einblenden */
+        #custom-logo-overlay.logo-visible {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.0s linear, visibility 0.0s linear;
         }
 
         #custom-logo-overlay img {
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Skaliert das Bild passend, ohne es zu verzerren */
+            object-fit: contain;
         }
 
         #channel-display {
@@ -174,13 +182,9 @@
                 font-size: 10px;
             }
 
-            /* Mobile-spezifische Stile für das Logo-Overlay */
+            /* GEÄNDERT: Logo auf Mobile komplett ausblenden */
             #custom-logo-overlay {
-                /* ANPASSEN: Diese Werte sind für Mobile. Teste und justiere sie. */
-                height: 12px;  /* Kleinere Höhe für Mobile */
-                /* width: 45px; */ /* Falls 'auto' nicht reicht, explizite Breite setzen */
-                bottom: 6px;   /* Angepasster Abstand von unten für Mobile */
-                right: 7px;  /* Angepasster Abstand von rechts für Mobile */
+                display: none !important;
             }
         }
     </style>
@@ -248,7 +252,7 @@
             } else {
                 channelNameDisplay.textContent = "Keine Sender konfiguriert!";
                 toggleMuteButton.disabled = true;
-                if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
+                if(customLogoOverlay) customLogoOverlay.classList.remove('logo-visible');
             }
         }
 
@@ -286,7 +290,7 @@
         function onPlayerError(event) {
             console.error("YouTube Player Fehler:", event.data);
             channelNameDisplay.textContent = "Fehler beim Laden des Senders.";
-             if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
+             if(customLogoOverlay) customLogoOverlay.classList.remove('logo-visible');
         }
 
         function playStaticEffect(duration = 150) {
@@ -310,7 +314,7 @@
                 }
                 playerReady = false;
                 toggleMuteButton.disabled = true;
-                if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
+                if(customLogoOverlay) customLogoOverlay.classList.remove('logo-visible');
                 return;
             }
 
@@ -323,13 +327,15 @@
             playStaticEffect();
 
             if (customLogoOverlay) {
-                customLogoOverlay.style.opacity = '1';
+                // GEÄNDERT: Klasse für sichtbares Logo hinzufügen
+                customLogoOverlay.classList.add('logo-visible');
                 if (logoFadeTimeoutId) {
                     clearTimeout(logoFadeTimeoutId);
                 }
                 logoFadeTimeoutId = setTimeout(() => {
                     if (customLogoOverlay) {
-                        customLogoOverlay.style.opacity = '0';
+                        // GEÄNDERT: Klasse für sichtbares Logo entfernen
+                        customLogoOverlay.classList.remove('logo-visible');
                     }
                 }, 4000);
             }

@@ -9,9 +9,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
         body {
-            background-color: #1a1a1a; /* Dunkler Hintergrund */
-            color: #e0e0e0; /* Heller Text */
-            font-family: 'VT323', monospace; /* Retro-Pixel-Schrift */
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'VT323', monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,17 +43,46 @@
             background-color: #080808;
             border: 3px solid #222;
             border-radius: 10px;
-            margin-bottom: 20px; /* Etwas mehr Platz für den Mute-Button */
-            position: relative;
+            margin-bottom: 20px;
+            position: relative; /* Wichtig für die Positionierung der Overlays */
             overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
 
-        /* Der Iframe selbst oder der Div, den der Player ersetzt */
-        #video-player-container { /* Geändert von iframe zu div für YT API */
+        #video-player-container {
             width: 100%;
             height: 100%;
+            position: absolute; /* Stellt sicher, dass es unter den Overlays liegt, falls nötig */
+            top: 0;
+            left: 0;
+            z-index: 1; /* Niedriger z-index für den Player-Container */
         }
+
+        .static-overlay { /* Für den Flimmer-Effekt beim Umschalten */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                repeating-linear-gradient(transparent, transparent 1px, rgba(200,200,200,0.05) 1px, rgba(200,200,200,0.05) 2px),
+                repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(200,200,200,0.05) 1px, rgba(200,200,200,0.05) 2px);
+            opacity: 0;
+            transition: opacity 0.05s linear;
+            pointer-events: none; /* Lässt Klicks durch, da es nur kurz erscheint */
+            z-index: 10; /* Hoch, damit es kurzzeitig alles überdeckt */
+        }
+
+        #click-blocker-overlay { /* Die "unsichtbare Wand" */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* background-color: rgba(255,0,0,0.1); /* Testweise einfärben zum Debuggen */
+            z-index: 5; /* Liegt über dem Video-Player (z-index: 1), aber unter dem Static-Effekt (z-index: 10) */
+        }
+
 
         #channel-display {
             font-family: 'Press Start 2P', cursive;
@@ -71,8 +100,8 @@
         .controls {
             display: flex;
             justify-content: center;
-            flex-wrap: wrap; /* Damit Buttons umbrechen können */
-            gap: 10px; /* Abstand zwischen den Knöpfen */
+            flex-wrap: wrap;
+            gap: 10px;
             width: 100%;
             margin-top: 10px;
         }
@@ -81,9 +110,9 @@
             background: linear-gradient(145deg, #505050, #353535);
             color: #e0e0e0;
             border: 2px solid #202020;
-            padding: 10px 15px; /* Etwas kleiner für mehr Buttons */
+            padding: 10px 15px;
             font-family: 'Press Start 2P', cursive;
-            font-size: clamp(9px, 1.8vw, 12px); /* Kleinere Schrift für mehr Buttons */
+            font-size: clamp(9px, 1.8vw, 12px);
             cursor: pointer;
             border-radius: 8px;
             box-shadow: 0 3px 5px rgba(0,0,0,0.4), inset 0 -2px 0px #222;
@@ -111,22 +140,6 @@
             transform: translateY(0);
         }
 
-
-        .static-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                repeating-linear-gradient(transparent, transparent 1px, rgba(200,200,200,0.05) 1px, rgba(200,200,200,0.05) 2px),
-                repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(200,200,200,0.05) 1px, rgba(200,200,200,0.05) 2px);
-            opacity: 0;
-            transition: opacity 0.05s linear;
-            pointer-events: none;
-            z-index: 10;
-        }
-
         @media (max-width: 600px) {
             #tv-casing {
                 padding: 20px 20px 30px 20px;
@@ -144,9 +157,8 @@
             Kanal: <span id="current-channel-name">Wähle einen Sender</span>
         </div>
         <div id="tv-screen-container">
-            <div class="static-overlay" id="static-effect"></div>
-            <div id="video-player-container"></div>
-        </div>
+            <div id="video-player-container"></div> <div class="static-overlay" id="static-effect"></div>
+            <div id="click-blocker-overlay"></div> </div>
         <div class="controls">
             <button id="prev-channel" title="Vorheriger Sender"> << </button>
             <button id="random-channel" title="Zufälliger Sender"> Zufall </button>
@@ -158,17 +170,17 @@
     <script>
         // --- VIDEOKONFIGURATION ---
         const channels = [
-            { name: "vlogers", videoId: "CxX92BBhHBw?si=25Wc1qb-ybFsBiAh" },
-            { name: "alien invasion", videoId: "VILm23Ye0XQ" }, // Korrigierte ID, falls VILm richtig ist
+            { name: "Ants in eyes", videoId: "V6SFEiGEHY0" },
+            { name: "alien invasion", videoId: "VILm23Ye0XQ" },
             { name: "Bigfoot Vlog", videoId: "fEhJlRrufQY" },
             { name: "the lelo show", videoId: "Gsx_k4JT4Pw" },
         ];
         // --- ENDE VIDEOKONFIGURATION ---
 
         let currentChannelIndex = -1;
-        let ytPlayer; // Variable für den YouTube Player
+        let ytPlayer;
         let playerReady = false;
-        let userWantsSound = false; // Startet stumm, Nutzer muss aktiv Ton einschalten
+        let userWantsSound = false;
 
         const prevButton = document.getElementById('prev-channel');
         const nextButton = document.getElementById('next-channel');
@@ -177,16 +189,13 @@
         const channelNameDisplay = document.getElementById('current-channel-name');
         const staticOverlay = document.getElementById('static-effect');
 
-        // 1. Lade die YouTube IFrame Player API asynchron.
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         const firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-        // 2. Diese Funktion wird aufgerufen, wenn die API geladen ist.
         function onYouTubeIframeAPIReady() {
             console.log("YouTube API ist bereit.");
-            // Lade den initialen Kanal, falls einer ausgewählt werden soll beim Start
             if (channels.length > 0) {
                 loadInitialChannel();
             } else {
@@ -195,12 +204,10 @@
             }
         }
 
-        // 3. Player-Callbacks
         function onPlayerReady(event) {
             console.log("Player ist bereit.");
             playerReady = true;
             toggleMuteButton.disabled = false;
-            // Setze initialen Mute-Status und Button-Text basierend auf userWantsSound
             if (userWantsSound) {
                 event.target.unMute();
                 toggleMuteButton.textContent = "Ton Aus";
@@ -208,14 +215,13 @@
                 event.target.mute();
                 toggleMuteButton.textContent = "Ton An";
             }
-            event.target.playVideo(); // Starte das Video
+            event.target.playVideo();
         }
 
         function onPlayerStateChange(event) {
-            // Wenn ein neues Video geladen wurde und anfängt zu spielen (oder loopt)
             if (event.data === YT.PlayerState.PLAYING) {
                 console.log("Video spielt, setze Mute-Status.");
-                if (playerReady) { // Stelle sicher, dass der Player nicht zerstört wurde
+                if (playerReady && ytPlayer) {
                     if (userWantsSound) {
                         ytPlayer.unMute();
                     } else {
@@ -223,19 +229,16 @@
                     }
                 }
             }
-             // Automatisches Neuladen des Videos, wenn es endet (für Loop-Effekt)
             if (event.data === YT.PlayerState.ENDED) {
                 console.log("Video beendet, starte neu für Loop.");
-                ytPlayer.playVideo(); // Oder ytPlayer.seekTo(0); ytPlayer.playVideo();
+                if (ytPlayer) ytPlayer.playVideo();
             }
         }
 
         function onPlayerError(event) {
             console.error("YouTube Player Fehler:", event.data);
             channelNameDisplay.textContent = "Fehler beim Laden des Senders.";
-            // Hier könntest du versuchen, zum nächsten Sender zu springen oder eine Fehlermeldung anzuzeigen
         }
-
 
         function playStaticEffect(duration = 150) {
             staticOverlay.style.opacity = '1';
@@ -245,9 +248,7 @@
         }
 
         function loadInitialChannel() {
-            // Startet mit einem zufälligen Sender oder dem ersten
             const initialIndex = Math.floor(Math.random() * channels.length);
-            // const initialIndex = 0; // Für den ersten Sender
             loadChannel(initialIndex, true);
         }
 
@@ -255,7 +256,7 @@
             if (channels.length === 0) {
                 channelNameDisplay.textContent = "Keine Sender konfiguriert!";
                 if (ytPlayer && typeof ytPlayer.destroy === 'function') {
-                    ytPlayer.destroy(); // Zerstöre alten Player wenn keine Videos da sind
+                    ytPlayer.destroy();
                     ytPlayer = null;
                 }
                 playerReady = false;
@@ -272,30 +273,28 @@
             playStaticEffect();
 
             setTimeout(() => {
-                if (ytPlayer && playerReady) { // Wenn Player existiert und bereit ist
+                if (ytPlayer && playerReady) {
                     console.log(`Lade Video-ID in bestehenden Player: ${channel.videoId}`);
                     ytPlayer.loadVideoById(channel.videoId);
-                    // Der onPlayerStateChange Handler kümmert sich um den Mute-Status
-                } else if (window.YT && window.YT.Player) { // Wenn API geladen, aber Player noch nicht erstellt/bereit
+                } else if (window.YT && window.YT.Player) {
                      if (ytPlayer && typeof ytPlayer.destroy === 'function') {
-                        ytPlayer.destroy(); // Zerstöre alten Player bevor ein neuer erstellt wird
+                        ytPlayer.destroy();
                         ytPlayer = null;
                      }
                     console.log(`Erstelle neuen Player für Video-ID: ${channel.videoId}`);
-                    playerReady = false; // Wird in onPlayerReady wieder true
-                    toggleMuteButton.disabled = true; // Deaktivieren, bis der neue Player bereit ist
+                    playerReady = false;
+                    toggleMuteButton.disabled = true;
 
                     ytPlayer = new YT.Player('video-player-container', {
                         videoId: channel.videoId,
                         playerVars: {
                             'autoplay': 1,
-                            'controls': 0,       // Keine YouTube-Steuerelemente
-                            'loop': 0,           // Loop wird manuell via onPlayerStateChange (ENDED) gehandhabt
-                            // 'playlist': channel.videoId, // Nötig für loop=1, aber wir machen es manuell
-                            'modestbranding': 1, // Weniger YouTube-Branding
-                            'rel': 0,            // Keine verwandten Videos
-                            'iv_load_policy': 3, // Keine Video-Annotationen
-                            'mute': userWantsSound ? 0 : 1 // Starte basierend auf userWantsSound
+                            'controls': 0,
+                            'loop': 0,
+                            'modestbranding': 1,
+                            'rel': 0,
+                            'iv_load_policy': 3,
+                            'mute': userWantsSound ? 0 : 1
                         },
                         events: {
                             'onReady': onPlayerReady,
@@ -304,15 +303,11 @@
                         }
                     });
                 } else {
-                    // API noch nicht geladen, dies sollte durch onYouTubeIframeAPIReady behandelt werden
                     console.log("API oder Player noch nicht bereit, Video wird später geladen.");
-                    // Für den Fall, dass onYouTubeIframeAPIReady noch nicht gelaufen ist,
-                    // wird der initiale Kanal dort geladen.
                 }
             }, 50);
         }
 
-        // Event Listener für die Knöpfe
         nextButton.addEventListener('click', () => {
             if (channels.length > 0) loadChannel(currentChannelIndex + 1);
         });
@@ -334,8 +329,7 @@
 
         toggleMuteButton.addEventListener('click', () => {
             if (!playerReady || !ytPlayer) return;
-
-            userWantsSound = !userWantsSound; // Toggle den Wunsch des Nutzers
+            userWantsSound = !userWantsSound;
             if (userWantsSound) {
                 ytPlayer.unMute();
                 toggleMuteButton.textContent = "Ton Aus";
@@ -347,9 +341,7 @@
             }
         });
 
-        // Initialisierung (wird von onYouTubeIframeAPIReady übernommen)
         console.log("Interdimensional TV Skript geladen. Warte auf YouTube API...");
-
     </script>
 </body>
 </html>

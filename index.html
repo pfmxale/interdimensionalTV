@@ -82,23 +82,25 @@
             z-index: 5;
         }
 
+        /* Standard-Stile für das Logo (Desktop und größere Bildschirme) */
         #custom-logo-overlay {
             position: absolute;
-            bottom: 8px;
-            right: 10px;
-            width: auto;
-            height: 40px; /* ANPASSEN an die Größe des YouTube-Logos/deines Logos */
+            /* ANPASSEN: Diese Werte sind für Desktop. Teste und justiere sie. */
+            bottom: 10px;
+            right: 12px;
+            height: 20px; /* Beispielhöhe für Desktop - ANPASSEN */
+            width: auto;  /* Breite passt sich proportional zur Höhe an, wenn img object-fit: contain hat */
             z-index: 6;
             pointer-events: none;
-            opacity: 0; /* NEU: Standardmäßig unsichtbar */
-            transition: opacity 0.5s ease-in-out; /* NEU: Für sanftes Ein-/Ausblenden */
+            opacity: 0; /* Standardmäßig unsichtbar, wird per JS gesteuert */
+            transition: opacity 0.5s ease-in-out; /* Für sanftes Ein-/Ausblenden */
         }
 
         #custom-logo-overlay img {
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: contain; /* Skaliert das Bild passend, ohne es zu verzerren */
         }
 
         #channel-display {
@@ -157,13 +159,29 @@
             transform: translateY(0);
         }
 
+        /* Media Query für kleinere Bildschirme (z.B. Handys) */
         @media (max-width: 600px) {
             #tv-casing {
                 padding: 20px 20px 30px 20px;
                 border-radius: 20px 20px 30px 30px / 80px 80px 120px 120px;
             }
-            #channel-display { font-size: 12px; padding: 5px 10px; }
-            .controls button { padding: 8px 12px; }
+            #channel-display {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+            .controls button {
+                padding: 8px 12px;
+                font-size: 10px;
+            }
+
+            /* Mobile-spezifische Stile für das Logo-Overlay */
+            #custom-logo-overlay {
+                /* ANPASSEN: Diese Werte sind für Mobile. Teste und justiere sie. */
+                height: 12px;  /* Kleinere Höhe für Mobile */
+                /* width: 45px; */ /* Falls 'auto' nicht reicht, explizite Breite setzen */
+                bottom: 6px;   /* Angepasster Abstand von unten für Mobile */
+                right: 7px;  /* Angepasster Abstand von rechts für Mobile */
+            }
         }
     </style>
 </head>
@@ -208,7 +226,7 @@
         let ytPlayer;
         let playerReady = false;
         let userWantsSound = false;
-        let logoFadeTimeoutId = null; // NEU: Timer-ID für das Logo-Ausblenden
+        let logoFadeTimeoutId = null;
 
         const prevButton = document.getElementById('prev-channel');
         const nextButton = document.getElementById('next-channel');
@@ -216,7 +234,7 @@
         const toggleMuteButton = document.getElementById('toggle-mute-button');
         const channelNameDisplay = document.getElementById('current-channel-name');
         const staticOverlay = document.getElementById('static-effect');
-        const customLogoOverlay = document.getElementById('custom-logo-overlay'); // NEU: Logo-Element holen
+        const customLogoOverlay = document.getElementById('custom-logo-overlay');
 
         const tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
@@ -230,7 +248,7 @@
             } else {
                 channelNameDisplay.textContent = "Keine Sender konfiguriert!";
                 toggleMuteButton.disabled = true;
-                if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Sicherstellen, dass Logo aus ist
+                if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
             }
         }
 
@@ -268,7 +286,7 @@
         function onPlayerError(event) {
             console.error("YouTube Player Fehler:", event.data);
             channelNameDisplay.textContent = "Fehler beim Laden des Senders.";
-             if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Logo bei Fehler ausblenden
+             if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
         }
 
         function playStaticEffect(duration = 150) {
@@ -292,7 +310,7 @@
                 }
                 playerReady = false;
                 toggleMuteButton.disabled = true;
-                if(customLogoOverlay) customLogoOverlay.style.opacity = '0'; // Logo ausblenden
+                if(customLogoOverlay) customLogoOverlay.style.opacity = '0';
                 return;
             }
 
@@ -304,15 +322,14 @@
             channelNameDisplay.textContent = `Kanal ${currentChannelIndex + 1}: ${channel.name}`;
             playStaticEffect();
 
-            // NEU: Logo-Handling
             if (customLogoOverlay) {
-                customLogoOverlay.style.opacity = '1'; // Logo einblenden
+                customLogoOverlay.style.opacity = '1';
                 if (logoFadeTimeoutId) {
-                    clearTimeout(logoFadeTimeoutId); // Alten Timer löschen
+                    clearTimeout(logoFadeTimeoutId);
                 }
                 logoFadeTimeoutId = setTimeout(() => {
                     if (customLogoOverlay) {
-                        customLogoOverlay.style.opacity = '0'; // Logo nach 4 Sek. ausblenden
+                        customLogoOverlay.style.opacity = '0';
                     }
                 }, 4000);
             }
@@ -350,10 +367,9 @@
                 } else {
                     console.log("API oder Player noch nicht bereit, Video wird später geladen.");
                 }
-            }, 50); // Kurze Verzögerung für den Playerstart, damit Effekte vorher sichtbar sind
+            }, 50);
         }
 
-        // Event Listener für die Knöpfe
         nextButton.addEventListener('click', () => {
             if (channels.length > 0) loadChannel(currentChannelIndex + 1);
         });
